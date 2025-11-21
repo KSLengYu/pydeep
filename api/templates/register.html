@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}注册 - 科幻留言板{% endblock %}
+
+{% block content %}
+<div class="content" style="max-width: 500px; margin: 0 auto;">
+    <div class="main-content">
+        <h2 style="color: var(--primary); margin-bottom: 20px; text-align: center;">🚀 注册账号</h2>
+        
+        <form id="registerForm">
+            <div class="form-group">
+                <label style="color: var(--light); margin-bottom: 5px; display: block;">邮箱地址</label>
+                <input type="email" id="email" class="form-control" placeholder="请输入有效邮箱" required>
+                <small style="color: var(--light); font-size: 12px;">用于接收验证邮件和登录</small>
+            </div>
+            
+            <div class="form-group">
+                <label style="color: var(--light); margin-bottom: 5px; display: block;">密码</label>
+                <input type="password" id="password" class="form-control" placeholder="请输入密码" required minlength="6">
+                <small style="color: var(--light); font-size: 12px;">密码长度至少6位</small>
+            </div>
+            
+            <div class="form-group">
+                <label style="color: var(--light); margin-bottom: 5px; display: block;">确认密码</label>
+                <input type="password" id="confirmPassword" class="form-control" placeholder="请再次输入密码" required minlength="6">
+            </div>
+            
+            <!-- QQ信息（可选） -->
+            <div style="border: 1px solid var(--secondary); border-radius: 8px; padding: 15px; margin-bottom: 20px; background: rgba(255,0,255,0.1);">
+                <h4 style="color: var(--secondary); margin-bottom: 10px; font-size: 16px;">📱 QQ信息（可选）</h4>
+                
+                <div class="form-group">
+                    <label style="color: var(--light); margin-bottom: 5px; display: block;">QQ号码</label>
+                    <input type="text" id="qqNumber" class="form-control" placeholder="请输入QQ号码">
+                </div>
+                
+                <div class="form-group">
+                    <label style="color: var(--light); margin-bottom: 5px; display: block;">QQ昵称</label>
+                    <input type="text" id="qqNickname" class="form-control" placeholder="请输入QQ昵称">
+                </div>
+                
+                <small style="color: var(--light); font-size: 12px;">
+                    绑定QQ后，您的留言将显示QQ昵称而不是邮箱地址
+                </small>
+            </div>
+            
+            <div class="form-group" style="text-align: center; margin-top: 30px;">
+                <button type="submit" class="btn" style="width: 100%; padding: 12px; font-size: 16px;">注册账号</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/login" style="color: var(--primary); text-decoration: none;">已有账号？立即登录</a>
+            </div>
+        </form>
+        
+        <!-- 注册说明 -->
+        <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 8px; border-left: 3px solid var(--accent);">
+            <h4 style="color: var(--accent); margin-bottom: 10px;">注册说明</h4>
+            <ul style="color: var(--light); font-size: 14px; padding-left: 20px;">
+                <li>注册后需要验证邮箱才能正常使用</li>
+                <li>验证邮件可能被误判为垃圾邮件，请检查垃圾箱</li>
+                <li>QQ信息为选填，可在个人中心随时绑定/解绑</li>
+                <li>游客模式无需注册即可留言（每日5条限制）</li>
+                <li>注册用户享受无限制留言和更多功能</li>
+            </ul>
+        </div>
+        
+        <!-- 邮箱服务说明 -->
+        <div style="margin-top: 20px; padding: 15px; background: rgba(0,255,255,0.1); border-radius: 8px;">
+            <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 14px;">📧 邮箱服务说明</h4>
+            <p style="color: var(--light); font-size: 12px; margin: 0;">
+                系统支持163邮箱和QQ邮箱验证。如果收不到验证邮件，请检查垃圾箱或稍后重试。
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const qqNumber = document.getElementById('qqNumber').value.trim();
+        const qqNickname = document.getElementById('qqNickname').value.trim();
+        
+        // 基础验证
+        if (!email || !password || !confirmPassword) {
+            showAlert('请填写完整的注册信息', 'error');
+            return;
+        }
+        
+        if (password.length < 6) {
+            showAlert('密码长度至少6位', 'error');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            showAlert('两次输入的密码不一致', 'error');
+            return;
+        }
+        
+        // 邮箱格式验证
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showAlert('请输入有效的邮箱地址', 'error');
+            return;
+        }
+        
+        // QQ号码验证（如果填写了）
+        if (qqNumber && !/^\d{5,12}$/.test(qqNumber)) {
+            showAlert('QQ号码格式不正确', 'error');
+            return;
+        }
+        
+        // 显示加载状态
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '注册中...';
+        submitBtn.disabled = true;
+        
+        // 发送注册请求
+        fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                email: email,
+                password: password,
+                qq_number: qqNumber,
+                qq_nickname: qqNickname
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                
+                // 清空表单
+                document.getElementById('registerForm').reset();
+                
+                // 提示用户查收邮件
+                setTimeout(() => {
+                    showAlert('请前往邮箱查收验证邮件，验证后即可登录', 'success');
+                }, 1500);
+                
+                // 5秒后跳转到登录页面
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 5000);
+                
+            } else {
+                showAlert(data.message, 'error');
+                // 恢复按钮状态
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('注册失败，请稍后重试', 'error');
+            // 恢复按钮状态
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+    
+    // QQ号码输入限制（只允许数字）
+    document.getElementById('qqNumber').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^\d]/g, '');
+    });
+    
+    // 密码强度提示
+    document.getElementById('password').addEventListener('input', function(e) {
+        const password = this.value;
+        const strengthIndicator = document.getElementById('passwordStrength') || createPasswordStrengthIndicator();
+        
+        let strength = 0;
+        let feedback = '';
+        
+        if (password.length >= 6) strength++;
+        if (password.length >= 8) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/[0-9]/.test(password)) strength++;
+        if (/[^A-Za-z0-9]/.test(password)) strength++;
+        
+        switch(strength) {
+            case 0:
+            case 1:
+                feedback = '<span style="color: #ff4444;">弱</span>';
+                break;
+            case 2:
+            case 3:
+                feedback = '<span style="color: #ff9900;">中</span>';
+                break;
+            case 4:
+            case 5:
+                feedback = '<span style="color: var(--accent);">强</span>';
+                break;
+        }
+        
+        strengthIndicator.innerHTML = `密码强度: ${feedback}`;
+    });
+    
+    function createPasswordStrengthIndicator() {
+        const indicator = document.createElement('small');
+        indicator.id = 'passwordStrength';
+        indicator.style.cssText = 'color: var(--light); font-size: 12px; display: block; margin-top: 5px;';
+        document.getElementById('password').parentNode.appendChild(indicator);
+        return indicator;
+    }
+    
+    // 回车键提交表单
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const form = document.getElementById('registerForm');
+            if (form) {
+                form.dispatchEvent(new Event('submit'));
+            }
+        }
+    });
+</script>
+{% endblock %}
