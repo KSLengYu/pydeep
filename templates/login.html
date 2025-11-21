@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - 科幻留言板{% endblock %}
+
+{% block content %}
+<div class="content" style="max-width: 500px; margin: 0 auto;">
+    <div class="main-content">
+        <h2 style="color: var(--primary); margin-bottom: 20px; text-align: center;">🔐 用户登录</h2>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label style="color: var(--light); margin-bottom: 5px; display: block;">邮箱地址</label>
+                <input type="email" id="email" class="form-control" placeholder="请输入注册邮箱" required>
+            </div>
+            
+            <div class="form-group">
+                <label style="color: var(--light); margin-bottom: 5px; display: block;">密码</label>
+                <input type="password" id="password" class="form-control" placeholder="请输入密码" required>
+            </div>
+            
+            <div class="form-group" style="text-align: center; margin-top: 30px;">
+                <button type="submit" class="btn" style="width: 100%; padding: 12px; font-size: 16px;">登录</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/register" style="color: var(--primary); text-decoration: none;">还没有账号？立即注册</a>
+            </div>
+        </form>
+        
+        <!-- 登录说明 -->
+        <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 8px; border-left: 3px solid var(--accent);">
+            <h4 style="color: var(--accent); margin-bottom: 10px;">登录说明</h4>
+            <ul style="color: var(--light); font-size: 14px; padding-left: 20px;">
+                <li>首次使用需要先注册账号</li>
+                <li>注册后需要验证邮箱才能登录</li>
+                <li>忘记密码请联系管理员重置</li>
+                <li>支持游客模式浏览和留言</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+        
+        if (!email || !password) {
+            showAlert('请填写完整的登录信息', 'error');
+            return;
+        }
+        
+        // 显示加载状态
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '登录中...';
+        submitBtn.disabled = true;
+        
+        fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                email: email,
+                password: password
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            } else {
+                showAlert(data.message, 'error');
+                // 恢复按钮状态
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('登录失败，请稍后重试', 'error');
+            // 恢复按钮状态
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+    
+    // 回车键提交表单
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const form = document.getElementById('loginForm');
+            if (form) {
+                form.dispatchEvent(new Event('submit'));
+            }
+        }
+    });
+</script>
+{% endblock %}
